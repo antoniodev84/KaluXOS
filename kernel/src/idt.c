@@ -16,7 +16,7 @@ struct idt_ptr {
     uint64_t base;
 } __attribute__((packed));
 
-static struct idt_entry idt[256];
+struct idt_entry idt[256];
 static struct idt_ptr idtr;
 
 

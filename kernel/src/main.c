@@ -1,9 +1,14 @@
 #include "uart.h"
 #include "gdt.h"
 #include "idt.h"
-#include "panic.h"
+#include "pic.h"
+#include "irq.h"
+#include "pit.h"
+#include "irq_idt.h"
 
 void kmain(void) {
+    __asm__ volatile ("cli");
+
     uart_init();
 
     uart_puts("\n");
@@ -19,6 +24,15 @@ void kmain(void) {
     idt_init();
     uart_puts("[ OK ] IDT initialized\n");
 
+    pic_init();
+    uart_puts("[ OK ] PIC initialized\n");
+
+    irq_idt_install();
+
+    irq_init();
+
+    pit_init(100);
+
     __asm__ volatile ("sti");
 
     uart_puts("[ OK ] Interrupts enabled\n");
@@ -29,4 +43,3 @@ void kmain(void) {
         __asm__ volatile ("hlt");
     }
 }
-
