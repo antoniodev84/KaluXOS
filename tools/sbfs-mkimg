@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+import struct
+import sys
+
+def sector(file, number):
+    file.seek(number * 512)
+    data = file.read(512)
+    if len(data) != 512:
+        raise RuntimeError("short image")
+    return bytearray(data)
+
+def put_sector(file, number, data):
+    file.seek(number * 512)
+    file.write(data)
+
+def main():
+    if len(sys.argv) != 4:
+        raise SystemExit(2)
+    image = sys.argv[1]
+    partition_offset = int(sys.argv[2])
+    partition_sectors = int(sys.argv[3])
+    base = partition_offset // 512 + 4096
+    fs_sectors = partition_sectors - 4096
+    superblock = bytearray(512)
+    struct.pack_into('<IIIIQQQQQIIQ', superblock, 0, 0x53424653, 1, 512, 128, fs_sectors, 1, 2048, 2049, 2050, 2, 1, 1)
+    inode = bytearray(128)
+    struct.pack_into('<IIIIQQQIIQ', inode, 0, 0o40755, 0, 0, 1, 0, 0, 0, 1, 1, 0)
+    inode[112:113] = b'/'
+    table = bytearray(512)
+    table[128:256] = inode
+    with open(image, 'r+b') as file:
+        put_sector(file, base, superblock)
+        put_sector(file, base + 1, table)
+        file.flush()
+
+if __name__ == '__main__':
+    main()

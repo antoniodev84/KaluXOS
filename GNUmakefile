@@ -65,17 +65,17 @@ run-uefi: edk2-ovmf-bins $(IMAGE_NAME).iso
 .PHONY: run-hdd
 run-hdd: $(IMAGE_NAME).hdd
 	qemu-system-x86_64 \
-		$(QEMU_MACHINE_FLAGS) \
-		-hda $(IMAGE_NAME).hdd \
-		$(QEMUFLAGS)
+			-M pc \
+			-drive file=$(IMAGE_NAME).hdd,format=raw,if=ide \
+			$(QEMUFLAGS)
 
 .PHONY: run-hdd-uefi
 run-hdd-uefi: edk2-ovmf-bins $(IMAGE_NAME).hdd
 	qemu-system-x86_64 \
-		$(QEMU_MACHINE_FLAGS) \
-		$(QEMU_UEFI_FLAGS) \
-		-hda $(IMAGE_NAME).hdd \
-		$(QEMUFLAGS)
+			-M pc \
+			$(QEMU_UEFI_FLAGS) \
+			-drive file=$(IMAGE_NAME).hdd,format=raw,if=ide \
+			$(QEMUFLAGS)
 
 .INTERMEDIATE: edk2-ovmf-bins.tar.gz
 edk2-ovmf-bins.tar.gz:
@@ -134,6 +134,7 @@ $(IMAGE_NAME).hdd: limine-binary/limine kernel
 	mcopy -i $(IMAGE_NAME).hdd@@$(HDD_PART_OFFSET) limine.conf limine-binary/limine-bios.sys ::/boot/limine
 	mcopy -i $(IMAGE_NAME).hdd@@$(HDD_PART_OFFSET) limine-binary/BOOTX64.EFI ::/EFI/BOOT
 	mcopy -i $(IMAGE_NAME).hdd@@$(HDD_PART_OFFSET) limine-binary/BOOTIA32.EFI ::/EFI/BOOT
+	python3 tools/sbfs-mkimg $(IMAGE_NAME).hdd $(HDD_PART_OFFSET) $(HDD_PART_SECTORS)
 
 .PHONY: clean
 clean:
