@@ -5,6 +5,9 @@
 #include "irq.h"
 #include "pit.h"
 #include "irq_idt.h"
+#include "pmm.h"
+#include "vmm.h"
+#include "heap.h"
 
 void kmain(void) {
     __asm__ volatile ("cli");
@@ -30,6 +33,17 @@ void kmain(void) {
     irq_idt_install();
 
     irq_init();
+
+    pmm_init();
+    uart_puts("[ OK ] PMM initialized, limit: 4 GiB, free pages: ");
+    uart_put_dec(pmm_free_pages());
+    uart_puts("\n");
+
+    vmm_init();
+    uart_puts("[ OK ] VMM initialized, page size: 4 KiB\n");
+
+    heap_init();
+    uart_puts("[ OK ] HEAP initialized, limit: 64 MiB, alignment: 16 bytes\n");
 
     pit_init(100);
 
