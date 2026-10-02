@@ -8,6 +8,8 @@
 #include "pmm.h"
 #include "vmm.h"
 #include "heap.h"
+#include "syscall.h"
+#include "scheduler.h"
 
 void kmain(void) {
     __asm__ volatile ("cli");
@@ -44,6 +46,9 @@ void kmain(void) {
 
     heap_init();
     uart_puts("[ OK ] HEAP initialized, limit: 64 MiB, alignment: 16 bytes\n");
+
+    syscall_init();
+    scheduler_init();
 
     pit_init(100);
 

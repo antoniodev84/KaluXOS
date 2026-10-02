@@ -1,16 +1,12 @@
 bits 64
-
 section .text
-
-extern irq_handler
-
+extern scheduler_tick
 %macro IRQ 1
 global irq%1
 irq%1:
     push qword %1
     jmp irq_common
 %endmacro
-
 IRQ 0
 IRQ 1
 IRQ 2
@@ -27,12 +23,9 @@ IRQ 12
 IRQ 13
 IRQ 14
 IRQ 15
-
 global irq_common
-
 irq_common:
     cld
-
     push rax
     push rbx
     push rcx
@@ -48,11 +41,10 @@ irq_common:
     push r13
     push r14
     push r15
-
-    mov rdi, [rsp + 120]
-
-    call irq_handler
-
+    mov rdi, rsp
+    mov rsi, [rsp + 120]
+    call scheduler_tick
+    mov rsp, rax
     pop r15
     pop r14
     pop r13
@@ -68,6 +60,5 @@ irq_common:
     pop rcx
     pop rbx
     pop rax
-
     add rsp, 8
     iretq

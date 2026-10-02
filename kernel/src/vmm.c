@@ -41,15 +41,16 @@ static uint64_t new_table(void) {
     return physical;
 }
 
-static uint64_t ensure_table(uint64_t *entry) {
+static uint64_t ensure_table(uint64_t *entry, uint64_t flags) {
     if ((*entry & VMM_PRESENT) != 0) {
+        *entry |= flags & VMM_USER;
         return *entry & ~0xfffULL;
     }
     uint64_t physical = new_table();
     if (physical == 0) {
         return 0;
     }
-    *entry = physical | VMM_PRESENT | VMM_WRITABLE;
+    *entry = physical | VMM_PRESENT | VMM_WRITABLE | (flags & VMM_USER);
     return physical;
 }
 
@@ -74,19 +75,19 @@ int vmm_map(uint64_t virtual_address, uint64_t physical_address, uint64_t flags)
     }
     uint64_t *pml4 = table(root_physical);
     uint64_t pml4_entry = (virtual_address >> 39) & 0x1ff;
-    uint64_t pdpt_physical = ensure_table(&pml4[pml4_entry]);
+    uint64_t pdpt_physical = ensure_table(&pml4[pml4_entry], flags);
     if (pdpt_physical == 0) {
         return -1;
     }
     uint64_t *pdpt = table(pdpt_physical);
     uint64_t pdpt_entry = (virtual_address >> 30) & 0x1ff;
-    uint64_t pd_physical = ensure_table(&pdpt[pdpt_entry]);
+    uint64_t pd_physical = ensure_table(&pdpt[pdpt_entry], flags);
     if (pd_physical == 0) {
         return -1;
     }
     uint64_t *pd = table(pd_physical);
     uint64_t pd_entry = (virtual_address >> 21) & 0x1ff;
-    uint64_t pt_physical = ensure_table(&pd[pd_entry]);
+    uint64_t pt_physical = ensure_table(&pd[pd_entry], flags);
     if (pt_physical == 0) {
         return -1;
     }

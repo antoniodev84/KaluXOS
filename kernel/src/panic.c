@@ -54,6 +54,10 @@ void panic(const char *message) {
 
 __attribute__((noreturn))
 void panic_exception(uint64_t vector, uint64_t error) {
+    uint64_t cr2 = 0;
+    if (vector == 14) {
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+    }
     __asm__ volatile ("cli");
 
     uart_puts("\n\n");
@@ -65,6 +69,11 @@ void panic_exception(uint64_t vector, uint64_t error) {
     uart_puts("\nError:  ");
     uart_put_hex(error);
     uart_puts("\n");
+    if (vector == 14) {
+        uart_puts("CR2:    ");
+        uart_put_hex(cr2);
+        uart_puts("\n");
+    }
 
     if (vector < 32) {
         uart_puts("Exception: ");
